@@ -1,8 +1,11 @@
 import pandas as pd
 
+from asf_mission_primer_la_stats import PROJECT_DIR
+
+
 def get_emissions():
     emissions = (
-        pd.read_csv("inputs/LA_emissions.csv")[
+        pd.read_csv(PROJECT_DIR / "inputs/data/LA_emissions.csv")[
             [
                 "Country",
                 "Local Authority",
@@ -12,47 +15,39 @@ def get_emissions():
                 "LA CO2 Sub-sector",
                 "Territorial emissions (kt CO2)",
                 "Mid-year Population (thousands)",
-                "Area (km2)"
+                "Area (km2)",
             ]
-        ].rename(columns={
-            "Country": "country",
-            "Local Authority": "la_name",
-            "Local Authority Code": "la_code",
-            "Calendar Year": "year",
-            "LA CO2 Sector": "sector",
-            "LA CO2 Sub-sector": "subsector",
-            "Territorial emissions (kt CO2)": "emissions",
-            "Mid-year Population (thousands)": "population",
-            "Area (km2)": "area"
+        ]
+        .rename(
+            columns={
+                "Country": "country",
+                "Local Authority": "la_name",
+                "Local Authority Code": "la_code",
+                "Calendar Year": "year",
+                "LA CO2 Sector": "sector",
+                "LA CO2 Sub-sector": "subsector",
+                "Territorial emissions (kt CO2)": "emissions",
+                "Mid-year Population (thousands)": "population",
+                "Area (km2)": "area",
             }
-        ).dropna(subset = ['la_code'])
+        )
+        .dropna(subset=["la_code"])
     )
 
     # Drop unallocated emissions - only care about ones allocated to LAs
     unallocated = emissions[["Unallocated" in string for string in emissions.la_name]]
-    emissions = emissions.drop(index = unallocated.index)
-    
+    emissions = emissions.drop(index=unallocated.index)
+
     return emissions
 
 
 def get_regions():
-    regions = (
-        pd.read_csv('inputs/la_all_codes.csv')[
-            [
-                'LADCD', 
-                'RGNNM', 
-                'CTRYNM'
-            ]
-        ].rename(columns={
-            'LADCD': "la_code",
-            'RGNNM': "region",
-            'CTRYNM': "country"
-        })
-    )
+    regions = pd.read_csv(PROJECT_DIR / "inputs/data/la_all_codes.csv")[
+        ["LADCD", "RGNNM", "CTRYNM"]
+    ].rename(columns={"LADCD": "la_code", "RGNNM": "region", "CTRYNM": "country"})
 
     # Make one column combining English region / devolved nation
     regions.region = regions.region.fillna(regions.country)
-    regions = regions.drop(columns = 'country')
-    
-    return regions
+    regions = regions.drop(columns="country")
 
+    return regions
