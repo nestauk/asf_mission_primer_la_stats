@@ -3,6 +3,7 @@ from asf_mission_primer_la_stats.pipeline.cleaning import (
     form_percentage_changes,
 )
 from asf_mission_primer_la_stats.pipeline.plotting_functions import (
+    country_bar_plot,
     line_region_plot,
     scatter_with_trendline,
     line_plot,
@@ -46,6 +47,80 @@ line_plot(
     title="Overall UK domestic CO2 emissions per capita",
     filename="per_capita.png",
     colour="orange",
+)
+
+
+# Emissions by country
+
+
+def country(list):
+    england = set(full.region) - set(["Wales", "Scotland", "Northern Ireland"])
+    country_list = []
+    for region in list:
+        if region in england:
+            country_list.append("England")
+        else:
+            country_list.append(region)
+    return country_list
+
+
+full["country"] = country(full.region)
+emissions_by_country = (
+    full[full.year == 2019]
+    .groupby("country")
+    .agg(total_pop=("population", sum), total_emissions=("total_emissions", sum))
+)
+
+emissions_by_country["emissions_per_capita"] = (
+    emissions_by_country["total_emissions"] / emissions_by_country["total_pop"]
+)
+emissions_sum = emissions_by_country.total_emissions.sum()
+emissions_by_country["prop_total"] = (
+    emissions_by_country["total_emissions"] / emissions_sum
+)
+
+# Estimated households (2019):
+# https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/families/datasets/householdsbyhouseholdsizeregionsofenglandandukconstituentcountries
+
+emissions_by_country["households"] = [23183000, 776000, 2492000, 1373000]
+emissions_by_country["emissions_per_household"] = (
+    emissions_by_country["total_emissions"] / emissions_by_country["households"] * 1000
+)
+
+
+country_bar_plot(
+    data=emissions_by_country,
+    factor="prop_total",
+    percentages=True,
+    ylim=1,
+    xlabel="Country",
+    ylabel="Percentage of total domestic CO2 emissions\n(total "
+    + str(round(emissions_sum / 1000, 1))
+    + " million tons)",
+    title="Total domestic CO2 emissions in 2019 by country",
+    filename="total_by_country.png",
+)
+
+country_bar_plot(
+    data=emissions_by_country,
+    factor="emissions_per_household",
+    percentages=False,
+    ylim=5,
+    xlabel="Country",
+    ylabel="Domestic CO2 emissions per household (tons)",
+    title="Domestic CO2 emissions per household in 2019 by country",
+    filename="per_household_by_country.png",
+)
+
+country_bar_plot(
+    data=emissions_by_country,
+    factor="emissions_per_capita",
+    percentages=False,
+    ylim=2,
+    xlabel="Country",
+    ylabel="Domestic CO2 emissions per capita (tons)",
+    title="Domestic CO2 emissions per capita in 2019 by country",
+    filename="per_capita_by_country.png",
 )
 
 

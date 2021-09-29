@@ -170,3 +170,40 @@ def multi_line_region_plot(
     ax.set_title(title)
     ax.legend()
     plt.savefig(PROJECT_DIR / "outputs/figures" / filename)
+
+
+def country_bar_plot(data, factor, percentages, ylim, xlabel, ylabel, title, filename):
+
+    fig, ax = plt.subplots()
+
+    ax.bar(data.index, data[factor])
+
+    if percentages:
+        ax.yaxis.set_major_formatter(
+            mtick.PercentFormatter(xmax=1, decimals=None, symbol="%", is_latex=False)
+        )
+        labels = [str(round(value * 100, 2)) + "%" for value in data[factor]]
+        offset = 0.03
+    else:
+        labels = [str(round(value, 2)) for value in data[factor]]
+        offset = 0.1
+
+    ax.set_ylim(0, ylim)
+
+    rects = ax.patches
+
+    for rect, label in zip(rects, labels):
+        height = rect.get_height()
+        ax.text(
+            rect.get_x() + rect.get_width() / 2,
+            height + offset,
+            label,
+            ha="center",
+            va="bottom",
+        )
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    plt.tight_layout()
+    plt.savefig(PROJECT_DIR / "outputs/figures" / filename)
